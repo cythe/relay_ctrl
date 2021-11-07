@@ -17,12 +17,13 @@
 
 int usage(char* me)
 {
-    printf("usage: %s <channel> <on|off>\n", me);
+    printf("usage: %s <1|2|3|4> <on|off>\n", me);
     printf("example: %s 1 on\n", me);
 }
 
 int main(int argc, char* argv[])
 {
+    int ret;
     int tty_fd;
     int channel;
     int state;
@@ -36,26 +37,46 @@ int main(int argc, char* argv[])
 	return -1;
     }
 
+    channel = atoi(argv[1]);
+    if (channel > 4 || channel < 1) {
+	usage(argv[0]);
+	return -1;
+    }
+    printf("channel = %d\n", channel);
+
+    if(!strcmp("on", argv[2])) {
+	printf("state = ON\n");
+	state = ON;
+    } else if(!strcmp("off", argv[2])) {
+	printf("state = OFF\n");
+	state = OFF;
+    } else {
+	printf("state = UNKNOW\n");
+	state = 0xff;
+	usage(argv[0]);
+	return -1;
+    }
+
     ini = iniparser_load("conf.ini");
     if (ini == NULL) {
         fprintf(stderr, "cannot parse file\n");
         return -1 ;
     }
+#if 0
     printf("======================\n");
     iniparser_dump(ini, stderr);
     printf("======================\n");
+#endif
 
-    /* Get pizza attributes */
     printf("tty:\n");
-
     tty_name = iniparser_getstring(ini, "tty:file", "NULL");
-    printf("ttyname = [%s]\n", tty_name);
+    printf("tty_name = [%s]\n", tty_name);
 
     tty_fd = open(tty_name, O_RDWR|O_NOCTTY);
     if (tty_fd < 0) {
 	printf("error@%s(%d): Open tty device file.\n", __func__, __LINE__);
-	perror("open");
-	return -1;
+	ret = -1;
+	goto error;
     }
 
     tcgetattr(tty_fd, &oldtio);
@@ -83,22 +104,8 @@ int main(int argc, char* argv[])
     tcsetattr(tty_fd, TCSANOW, &newtio);
     tcflush(tty_fd, TCIOFLUSH);
 
-    channel = atoi(argv[1]);
-    printf("channel = %d\n", channel);
-
-    if(!strcmp("on", argv[2])) {
-	printf("state = ON\n");
-	state = ON;
-    } else if(!strcmp("off", argv[2])) {
-	printf("state = OFF\n");
-	state = OFF;
-    } else {
-	printf("state = UNKNOW\n");
-	state = 0xff;
-    }
-
     buf[0] = 0x55;
-    buf[1] = channel;
+    buf[1] = channel-1;
     buf[2] = state;
 
     write(tty_fd, buf, 3);
@@ -106,7 +113,9 @@ int main(int argc, char* argv[])
     tcsetattr(tty_fd, TCSANOW, &oldtio);
     tcflush(tty_fd, TCIOFLUSH);
 
-    iniparser_freedict(ini);
     close(tty_fd);
-    return 0;
+
+error:
+    iniparser_freedict(ini);
+    return ret;
 }
