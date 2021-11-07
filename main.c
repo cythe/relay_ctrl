@@ -50,11 +50,11 @@ int main(int argc, char* argv[])
 
     tty_name = iniparser_getstring(ini, "tty:file", "NULL");
     printf("ttyname = [%s]\n", tty_name);
-    iniparser_freedict(ini);
 
     tty_fd = open(tty_name, O_RDWR|O_NOCTTY);
     if (tty_fd < 0) {
 	printf("error@%s(%d): Open tty device file.\n", __func__, __LINE__);
+	perror("open");
 	return -1;
     }
 
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     tcsetattr(tty_fd, TCSANOW, &oldtio);
     tcflush(tty_fd, TCIOFLUSH);
 
-
+    iniparser_freedict(ini);
     close(tty_fd);
     return 0;
 }
