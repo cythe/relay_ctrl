@@ -8,10 +8,12 @@
 #include <fcntl.h>
 #include <termios.h>
 
+#include "iniparser.h"
+
 #define ON 0
 #define OFF 1
 
-#define TTY "/dev/ttyUSB0"
+//#define TTY "/dev/ttyUSB0"
 
 int usage(char* me)
 {
@@ -26,13 +28,31 @@ int main(int argc, char* argv[])
     int state;
     uint8_t buf[3] = {0};
     struct termios oldtio, newtio;
+    dictionary  *   ini ;
+    const char  *tty_name;
 
     if (argc < 3) {
 	usage(argv[0]);
 	return -1;
     }
 
-    tty_fd = open(TTY, O_RDWR|O_NOCTTY);
+    ini = iniparser_load("conf.ini");
+    if (ini == NULL) {
+        fprintf(stderr, "cannot parse file\n");
+        return -1 ;
+    }
+    printf("======================\n");
+    iniparser_dump(ini, stderr);
+    printf("======================\n");
+
+    /* Get pizza attributes */
+    printf("tty:\n");
+
+    tty_name = iniparser_getstring(ini, "tty:file", "NULL");
+    printf("ttyname = [%s]\n", tty_name);
+    iniparser_freedict(ini);
+
+    tty_fd = open(tty_name, O_RDWR|O_NOCTTY);
     if (tty_fd < 0) {
 	printf("error@%s(%d): Open tty device file.\n", __func__, __LINE__);
 	return -1;
