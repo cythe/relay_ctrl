@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
 
     write(tty_fd, buf, 3);
 
+    sleep(1);
     tcsetattr(tty_fd, TCSANOW, &oldtio);
     tcflush(tty_fd, TCIOFLUSH);
 
