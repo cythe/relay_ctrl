@@ -60,8 +60,6 @@ int parse_ini(void)
 
 int serial_init(char* tty_name)
 {
-    printf("open %s\n", tty_name);
-    return 0;
     tty_fd = open(tty_name, O_RDWR|O_NOCTTY);
     if (tty_fd < 0) {
 	printf("error@%s(%d): Open tty device file.\n", __func__, __LINE__);

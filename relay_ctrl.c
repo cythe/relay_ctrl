@@ -15,7 +15,7 @@
 
 int usage(char* me)
 {
-    printf("usage: %s <1|2|3|4> <on|off>\n", me);
+    printf("usage: %s <channel> <on|off>\n", me);
     printf("example: %s 1 on\n", me);
 }
 
@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
     }
 
     channel = atoi(argv[1]);
-    if (channel > 4 || channel < 1) {
-	usage(argv[0]);
-	return -1;
-    }
+    //if (channel > 4 || channel < 1) {
+    //    usage(argv[0]);
+    //    return -1;
+    //}
     printf("channel = %d\n", channel);
 
     if(!strcmp("on", argv[2])) {
