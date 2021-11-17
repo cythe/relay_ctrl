@@ -1,5 +1,5 @@
 .PHYON: all clean
-TARGET=single_dog relay_ctrl relay_hub
+TARGET=single_dog relay_ctrl relay_hub test
 
 all: $(TARGET)
 
@@ -21,9 +21,12 @@ relay_hub: dictionary.o iniparser.o relay_hub.o
 relay_ctrl: dictionary.o iniparser.o relay_ctrl.o
 	$(Cross_compile)$(CC) $^ -o $@
 
+test: dictionary.o iniparser.o parallel.o
+	$(Cross_compile)$(CC) $^ -o $@ -lpthread
+
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET) 
 
 distclean: clean
 	rm -f GPATH GRTAGS GTAGS tags

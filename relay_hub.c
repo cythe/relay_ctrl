@@ -14,12 +14,19 @@
 #include "list.h"
 #include "iniparser.h"
 
-#define BUF_SIZE 500
-#define SOCK_PORT "8090"
+#define BUF_SIZE 32
+#define SOCK_PORT 8090
+
+struct __sockhandler {
+    int cfd;
+    struct sockaddr_in addr;
+    socklen_t addr_len;
+};
 
 struct __msg {
     struct list_head list;
-    uint8_t buf[32];
+    struct __sockhandler sh;
+    uint8_t buf[BUF_SIZE];
 };
 
 struct __config {
@@ -32,9 +39,7 @@ int tty_fd = -1;
 struct termios oldtio, newtio;
 int sfd;
 int stop;
-pthread_t tid;
-struct sockaddr_storage peer_addr;
-socklen_t peer_addr_len;
+pthread_t tid[2];
 
 int parse_ini(void)
 {
@@ -107,7 +112,12 @@ void sig_handler(int signum)
     int ret;
     serial_deinit();
     stop = 1;
-    ret = pthread_join(tid, NULL);
+
+    ret = pthread_join(tid[1], NULL);
+    if (ret)
+	printf("pthread_join: error\n");
+
+    ret = pthread_join(tid[0], NULL);
     if (ret)
 	printf("pthread_join: error\n");
 
@@ -121,13 +131,10 @@ int sock_init(void)
 
 void *deal_msg(void *arg)
 {
-    uint8_t buf[3] = {0};
     int channel;
     int state;
     while(!stop)
     {
-	memset(buf, 0, 3);
-
 	if (list_empty(&msg_list))
 	    continue;
 
@@ -140,108 +147,121 @@ void *deal_msg(void *arg)
 	//printf("ch = %#x\n", pm->buf[1]);
 	//printf("state = %#x\n", pm->buf[2]);
 
-	write(tty_fd, pm->buf, 3);
+	//write(tty_fd, pm->buf, 3);
 
-	read(tty_fd, pm->buf, 3);
-	if (sendto(sfd, pm->buf, 3, 0,
-		    (struct sockaddr *) &peer_addr,
-		    peer_addr_len) != 3)
-	    fprintf(stderr, "Error sending response\n");
+	//read(tty_fd, pm->buf, 3);
+	usleep(10000);
+	if (pm->buf[3] != pm->buf[2] + pm->buf[1])
+	{
+	    fprintf(stderr, "Error check for msg\n");
+	    exit(-1);
+	}
+	
+#if 1
+	write(pm->sh.cfd, pm->buf, 4);
+#endif
 
+	usleep(10000);
+	close(pm->sh.cfd);
 	list_del(&pm->list);
 	free(pm);
     }
 }
 
+void *recv_msg(void *arg)
+{
+    ssize_t nread;
+    struct __sockhandler * ph = arg;
+    char host[NI_MAXHOST], service[NI_MAXSERV];
+    struct __msg *pm;
+    int s;
+
+    printf("recv_msg:\n");
+    pm = (struct __msg*)malloc(sizeof(struct __msg));
+    memset(pm, 0, sizeof(struct __msg));
+    nread = read(ph->cfd, &pm->buf, 4);
+    if (nread == -1) {
+	printf("Received error!!\n");
+	return (void*)(-1);
+    }
+
+    s = getnameinfo((struct sockaddr*)&ph->addr, ph->addr_len, 
+	    host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV);
+    if (s == 0)
+	printf("Received %zd bytes from %s:%s\n",
+		nread, host, service);
+    else
+	fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
+
+    //printf("src: pm = %p pm->list = %p\n", pm, &pm->list);
+    printf("buf: ");
+    for(int i=0; i<nread; i++)
+    {
+	printf("%#x ", pm->buf[i]);
+    }
+    printf("\n");
+    memcpy(&pm->sh, ph, sizeof(struct __sockhandler));
+    list_add_tail(&pm->list, &msg_list);
+    free(arg);
+
+    return NULL;
+}
+
 int main(int argc, char *argv[])
 {
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    int s;
     int ret;
-    ssize_t nread;
     char buf[BUF_SIZE];
+    struct sockaddr_in addr;
 
     INIT_LIST_HEAD(&msg_list);
     signal(SIGTERM, sig_handler);
+    signal(SIGINT, sig_handler);
     parse_ini();
     serial_init(config.tty_name);
 
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-    hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
-
-    s = getaddrinfo(NULL, SOCK_PORT, &hints, &result);
-    if (s != 0) {
-	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-	exit(EXIT_FAILURE);
+    sfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sfd == -1) {
+	perror("socket");
+	return -1;
     }
 
-    /* getaddrinfo() returns a list of address structures.
-       Try each address until we successfully bind(2).
-       If socket(2) (or bind(2)) fails, we (close the socket
-       and) try the next address. */
-
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-	sfd = socket(rp->ai_family, rp->ai_socktype,
-		rp->ai_protocol);
-	if (sfd == -1)
-	    continue;
-
-	if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-	    break;                  /* Success */
-
-	close(sfd);
+    addr.sin_family = PF_INET;
+    addr.sin_port = htons(SOCK_PORT);
+    addr.sin_addr.s_addr = INADDR_ANY;
+    ret = bind(sfd, (struct sockaddr *)&addr, sizeof(struct sockaddr));
+    if (ret == -1) {
+	perror("bind");
+	return -1;
     }
 
-    if (rp == NULL) {               /* No address succeeded */
-	fprintf(stderr, "Could not bind\n");
-	exit(EXIT_FAILURE);
+    ret = listen(sfd, 64);
+    if (ret == -1) {
+	perror("listen");
+	return -1;
     }
 
-    freeaddrinfo(result);           /* No longer needed */
-
-    ret = pthread_create(&tid, NULL, deal_msg, NULL);
+    ret = pthread_create(&tid[0], NULL, deal_msg, NULL);
     if (ret) {
 	perror("pthread_create");
 	return -1;
     }
 
-    /* Read datagrams and echo them back to sender */
-
     while (1) {
-	peer_addr_len = sizeof(struct sockaddr_storage);
-	nread = recvfrom(sfd, buf, BUF_SIZE, 0,
-		(struct sockaddr *) &peer_addr, &peer_addr_len);
-	if (nread == -1)
-	    continue;               /* Ignore failed request */
+	struct __sockhandler *psa = (struct __sockhandler*)malloc(sizeof(struct __sockhandler));
 
-	char host[NI_MAXHOST], service[NI_MAXSERV];
-
-	s = getnameinfo((struct sockaddr *) &peer_addr,
-		peer_addr_len, host, NI_MAXHOST,
-		service, NI_MAXSERV, NI_NUMERICSERV);
-	if (s == 0)
-	    printf("Received %zd bytes from %s:%s\n",
-		    nread, host, service);
-	else
-	    fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
-
-	struct __msg *pm = (struct __msg*)malloc(sizeof(struct __msg));
-	//printf("src: pm = %p pm->list = %p\n", pm, &pm->list);
-	memset(pm, 0, sizeof(struct __msg));
-	printf("buf: ");
-	for(int i=0; i<nread; i++)
-	{
-	    printf("%#x ", buf[i]);
-	    pm->buf[i] = buf[i];
+	psa->cfd = accept(sfd, (struct sockaddr *)&psa->addr, &psa->addr_len);
+	if (psa->cfd == -1) {
+	    perror("accept");
+	    continue;
+	} else {
+	    printf("comming\n");
+	    ret = pthread_create(&tid[1], NULL, recv_msg, psa);
+	    if (ret) {
+		perror("pthread_create");
+		break;
+	    }
 	}
-	printf("\n");
-	list_add(&pm->list, &msg_list);
     }
+
+    close(sfd);
 }
