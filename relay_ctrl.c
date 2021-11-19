@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
     dest.sin_family = AF_INET;
     dest.sin_port = htons(SOCK_PORT);
-    dest.sin_addr.s_addr=inet_addr("128.224.162.151");
+    dest.sin_addr.s_addr=inet_addr("128.224.163.137"); //128.224.162.151");
 
     connect(sfd, (struct sockaddr *)&dest, sizeof(struct sockaddr));
 

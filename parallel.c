@@ -5,12 +5,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <pthread.h>
 #include <time.h>
 #include <signal.h>
 
 #define BUF_SIZE 500
-#define SOCK_PORT "8090"
+#define SOCK_PORT 8090
 #define SERVER "pek-rhao-d1.corp.ad.wrs.com"
 
 #define ON 0
@@ -22,13 +24,12 @@ pthread_t tid[16];
 void * p_rand(void *arg)
 {
     pthread_t *pt = arg;
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
     int sfd, s, j;
     size_t len;
     ssize_t nread;
     char buf[BUF_SIZE];
     int channel, state;
+    struct sockaddr_in dest;
 
     printf("create %ld\n", *pt);
     srand(time(NULL));
@@ -44,38 +45,13 @@ void * p_rand(void *arg)
 	state = random() % 2; 
 	printf("*pt[%ld]: Rq: ch = %#x, st = %#x\n", *pt, channel, state);
 
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-	hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
-	hints.ai_flags = 0;
-	hints.ai_protocol = 0;          /* Any protocol */
+	sfd = socket(AF_INET, SOCK_STREAM, 0);
 
-	s = getaddrinfo(SERVER, SOCK_PORT, &hints, &result);
-	if (s != 0) {
-	    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-	    exit(EXIT_FAILURE);
-	}
+	dest.sin_family = AF_INET;
+	dest.sin_port = htons(SOCK_PORT);
+	dest.sin_addr.s_addr=inet_addr("127.0.0.1"); //128.224.162.151");
 
-	for (rp = result; rp != NULL; rp = rp->ai_next) {
-	    sfd = socket(rp->ai_family, rp->ai_socktype,
-		    rp->ai_protocol);
-	    if (sfd == -1)
-		continue;
-	    if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
-		break;                  /* Success */
-
-	    close(sfd);
-	}
-
-	if (rp == NULL) {               /* No address succeeded */
-	    fprintf(stderr, "Could not connect\n");
-	    exit(EXIT_FAILURE);
-	}
-
-	freeaddrinfo(result);           /* No longer needed */
-
-	/* Send remaining command-line arguments as separate
-	   datagrams, and read responses from server */
+	connect(sfd, (struct sockaddr *)&dest, sizeof(struct sockaddr));
 
 	buf[0] = 0x55;
 	buf[1] = channel;
@@ -108,6 +84,8 @@ void * p_rand(void *arg)
 #endif
 	close(sfd);
     }
+
+    pthread_detach(pthread_self());
 }
  
 void sig_handler(int signum)
@@ -115,12 +93,15 @@ void sig_handler(int signum)
     int ret;
     int i;
     stop = 1;
+#if 0
+    void* res;
     for(i = 0; i < 16; i++)
     {
-	ret = pthread_join(tid[i], NULL);
+	ret = pthread_join(tid[i], &res);
 	if (ret)
-	    printf("pthread_join: [%ld] error\n", tid[i]);
+	    perror("pthread_join");
     }
+#endif
 
     printf("Bye-bye.\n");
 }
@@ -135,11 +116,10 @@ int main(int argc, char *argv[])
     for(i = 0; i < 16; i++)
     {
 	pthread_create(&tid[i], NULL, p_rand, &tid[i]);
-	pthread_detach(tid[i]);
     }
 
     while(1)
-	sleep(0);
+	sleep(1);
 
     return 0;
 }

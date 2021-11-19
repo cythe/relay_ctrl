@@ -10,7 +10,7 @@ SRCS=${wildcard *.c}
 
 OBJS:=${patsubst %.c, %.o, $(SRCS)}
 %.o:%.c
-	$(Cross_compile)$(CC) -c $< -o $@
+	$(Cross_compile)$(CC) -g -c $< -o $@
 
 single_dog: dictionary.o iniparser.o main.o
 	$(Cross_compile)$(CC) $^ -o $@
