@@ -6,10 +6,9 @@ After=network.target
 Type=simple
 PIDFile=/run/relay_hub.pid
 ExecStart=/opt/relay_ctrl/relay_hub /opt/relay_ctrl/hub.ini
-
 ExecStop=/bin/kill -s QUIT $MAINPID
-
 PrivateTmp=true
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
