@@ -10,8 +10,10 @@
 
 #include "iniparser.h"
 
-#define BUF_SIZE 500
+#define BUF_SIZE 32
 #define SOCK_PORT "8090"
+#define CH_MIN 1
+#define CH_MAX 20
 
 #define ON 0
 #define OFF 1
@@ -19,6 +21,7 @@
 int usage(char* me)
 {
     printf("usage: %s <channel> <on|off>\n", me);
+    printf("channel: %d..%d \n", CH_MIN,CH_MAX);
     printf("example: %s 1 on\n", me);
 }
 
@@ -40,10 +43,10 @@ int main(int argc, char *argv[])
     }
 
     channel = atoi(argv[1]);
-    //if (channel > 4 || channel < 1) {
-    //    usage(argv[0]);
-    //    return -1;
-    //}
+    if (channel > CH_MAX || channel < CH_MIN) {
+        usage(argv[0]);
+        return -1;
+    }
     printf("channel = %d\n", channel);
 
     if(!strcmp("on", argv[2])) {
