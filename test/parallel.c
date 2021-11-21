@@ -13,7 +13,6 @@
 
 #define BUF_SIZE 500
 #define SOCK_PORT 8090
-#define SERVER "pek-rhao-d1.corp.ad.wrs.com"
 
 #define ON 0
 #define OFF 1
@@ -49,7 +48,7 @@ void * p_rand(void *arg)
 
 	dest.sin_family = AF_INET;
 	dest.sin_port = htons(SOCK_PORT);
-	dest.sin_addr.s_addr=inet_addr("127.0.0.1"); //128.224.162.151");
+	dest.sin_addr.s_addr=inet_addr("127.0.0.1");
 
 	connect(sfd, (struct sockaddr *)&dest, sizeof(struct sockaddr));
 

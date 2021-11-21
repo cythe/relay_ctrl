@@ -1,5 +1,5 @@
 .PHYON: all clean
-TARGET=single_dog relay_ctrl relay_hub test
+TARGET=single_dog relay_ctrl relay_hub
 
 all: $(TARGET)
 
@@ -12,7 +12,7 @@ OBJS:=${patsubst %.c, %.o, $(SRCS)}
 %.o:%.c
 	$(Cross_compile)$(CC) -g -c $< -o $@
 
-single_dog: dictionary.o iniparser.o main.o
+single_dog: dictionary.o iniparser.o single_dog.o
 	$(Cross_compile)$(CC) $^ -o $@
 
 relay_hub: dictionary.o iniparser.o relay_hub.o
@@ -20,10 +20,6 @@ relay_hub: dictionary.o iniparser.o relay_hub.o
 
 relay_ctrl: dictionary.o iniparser.o relay_ctrl.o
 	$(Cross_compile)$(CC) $^ -o $@
-
-test: dictionary.o iniparser.o parallel.o
-	$(Cross_compile)$(CC) $^ -o $@ -lpthread
-
 
 clean:
 	rm -f $(OBJS) $(TARGET) 
