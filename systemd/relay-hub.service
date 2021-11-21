@@ -1,0 +1,16 @@
+[Unit]
+Description=relay_hub
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/run/relay_hub.pid
+ExecStart=/opt/relay_ctrl/bin/relay_hub
+
+ExecStop=/bin/kill -s QUIT $MAINPID
+
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
