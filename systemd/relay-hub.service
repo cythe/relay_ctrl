@@ -3,9 +3,9 @@ Description=relay_hub
 After=network.target
 
 [Service]
-Type=forking
+Type=simple
 PIDFile=/run/relay_hub.pid
-ExecStart=/opt/relay_ctrl/bin/relay_hub
+ExecStart=/opt/relay_ctrl/relay_hub /opt/relay_ctrl/hub.ini
 
 ExecStop=/bin/kill -s QUIT $MAINPID
 

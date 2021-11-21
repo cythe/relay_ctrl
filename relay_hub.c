@@ -51,11 +51,11 @@ int sfd;
 int stop;
 pthread_t tid[ID_LIMIT];
 
-int parse_ini(void)
+int parse_ini(char *path_ini)
 {
     dictionary *ini;
 
-    ini = iniparser_load("hub.ini");
+    ini = iniparser_load(path_ini);
     if (ini == NULL) {
         fprintf(stderr, "cannot parse file\n");
         return -1 ;
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
 	tid[i] = -1;
     }
 
-    parse_ini();
+    parse_ini(argv[1]);
 
     ret = serial_init(config.tty_name);
     if (ret < 0) {
