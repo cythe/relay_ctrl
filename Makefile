@@ -24,5 +24,10 @@ relay_ctrl: dictionary.o iniparser.o relay_ctrl.o
 clean:
 	rm -f $(OBJS) $(TARGET) 
 
+dist: relay_hub relay_ctrl
+	rm -rf dist && mkdir dist
+	mv $(TARGET) dist/
+	cp -f *.ini dist/
+
 distclean: clean
 	rm -f GPATH GRTAGS GTAGS tags
