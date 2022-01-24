@@ -15,8 +15,8 @@
 #define CH_MIN 1
 #define CH_MAX 20
 
-#define ON 0
-#define OFF 1
+#define ON 1
+#define OFF 0
 
 int usage(char* me)
 {
