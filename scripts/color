@@ -1,0 +1,42 @@
+#!/bin/bash
+
+SC_RED="\033[0;31m"
+SC_B_RED="\033[1;31m"
+SC_GREEN="\033[0;32m"
+SC_B_GREEN="\033[1;32m"
+SC_YELLOW="\033[0;33m"
+SC_B_YELLOW="\033[1;33m"
+SC_BLUE="\033[0;34m"
+SC_B_BLUE="\033[1;34m"
+SC_PURPLE="\033[0;35m"
+SC_B_PURPLE="\033[1;35m"
+SC_CYAN="\033[0;36m"
+SC_B_CYAN="\033[1;36m"
+SC_WHITE="\033[0;37m"
+SC_B_WHITE="\033[1;37m"
+
+SC_NONE="\033[m"
+
+function echo_c {
+	echo -e `eval echo '$'"$1" `$2 $SC_NONE
+}
+
+function echo_c_test {
+	echo_c SC_NONE     "SC_NONE"
+	echo_c SC_RED      "SC_RED"
+	echo_c SC_B_RED    "SC_B_RED"
+	echo_c SC_GREEN    "SC_GREEN"
+	echo_c SC_B_GREEN  "SC_B_GREEN"
+	echo_c SC_YELLOW   "SC_YELLOW"
+	echo_c SC_B_YELLOW "SC_B_YELLOW"
+	echo_c SC_BLUE     "SC_BLUE"
+	echo_c SC_B_BLUE   "SC_B_BLUE"
+	echo_c SC_PURPLE   "SC_PURPLE"
+	echo_c SC_B_PURPLE "SC_B_PURPLE"
+	echo_c SC_CYAN     "SC_CYAN"
+	echo_c SC_B_CYAN   "SC_B_CYAN"
+	echo_c SC_WHITE    "SC_WHITE"
+	echo_c SC_B_WHITE  "SC_B_WHITE"
+}
+
+#echo_c_test
