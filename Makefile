@@ -21,13 +21,13 @@ relay_hub: dictionary.o iniparser.o relay_hub.o
 relay_ctrl: dictionary.o iniparser.o relay_ctrl.o
 	$(Cross_compile)$(CC) $^ -o $@
 
-clean:
-	rm -f $(OBJS) $(TARGET) 
-
 dist: relay_hub relay_ctrl
 	rm -rf dist && mkdir dist
 	mv $(TARGET) dist/
 	cp -f *.ini dist/
+
+clean:
+	rm -rf dist $(OBJS) $(TARGET) 
 
 distclean: clean
 	rm -f GPATH GRTAGS GTAGS tags
