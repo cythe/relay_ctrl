@@ -1,8 +1,46 @@
-build:
+#### 编译安装
+
+* build
     make
 
-install:
+* install
     sudo ./scripts/install.sh
 
-uninstall:
+* uninstall
     sudo ./scripts/uninstall.sh
+
+
+#### 使用方法
+
+1. 硬件连接
+
+串口: 开发板串口连接到USB-hub上(目前com1~com7可用)
+电源: 开发板电源与继电器控制插座连接
+网线: 开发板通信网口与交换机连接
+
+硬件连接完成后我会邮件通知硬件对应关系.
+e.g.
+    | User | barcode | RelayChannel | TelnetPort |
+    | rhao | 20123   | 1            | 2001       |
+
+2. 软件控制
+
+运行软件要保证 ping relay-hub 可通.
+relay-hub 是控制服务器的hostname.
+
+开发板电源控制:
+    解压relay_ctrl.tgz.
+    cd relay_ctrl
+    ./a.out <RelayChannel> <on|off>
+
+    e.g.
+        ./a.out 1 on
+
+    使用 ctrl.sh 可以不进目录执行.
+    <Path to ctrl.sh> <RelayChannel> <on|off>
+
+串口:
+    telnet relay-hub <TelnetPort>
+
+    e.g.
+        telnet relay-hub 2001
