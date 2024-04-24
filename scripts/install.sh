@@ -12,7 +12,7 @@ function gen_udev_rules() {
 
     for t in $ttys
     do
-	info=`udevadm info $t | grep -n "ID_MODEL_FROM_DATABASE=HL-340 USB-Serial adapter"`
+	info=`udevadm info $t | grep -n "ID_VENDOR_ID=1a86"`
 	if [ "X$info"  != "X" ]; then
 	    tty_relay=$t
 	fi
