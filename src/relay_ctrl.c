@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <libgen.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -25,13 +26,37 @@ int usage(char* me)
     printf("example: %s 1 on\n", me);
 }
 
+int get_ini_path(char* app_path, char* ini_path, ssize_t ini_path_len)
+{
+    char *path_copy = NULL;
+
+    path_copy = strdup(app_path);
+    if (path_copy == NULL) {
+	perror("strdup");
+	return -1;
+    }
+
+    snprintf(ini_path, ini_path_len, "%s/ctrl.ini", dirname(path_copy));
+
+    if (access(ini_path, F_OK) == -1) {
+	perror("ctrl.ini not found");
+	free(path_copy);
+    }
+
+    free(path_copy);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     struct sockaddr_in dest;
     int sfd, s, j;
+    int ret;
     size_t len;
     ssize_t nread;
     char buf[BUF_SIZE];
+    char config_path[128];
     int channel, state;
     dictionary *ini;
     struct addrinfo hints;
@@ -39,6 +64,11 @@ int main(int argc, char *argv[])
 
     if (argc < 3) {
 	usage(argv[0]);
+	return -1;
+    }
+
+    ret = get_ini_path(argv[0], config_path, sizeof(config_path));
+    if (ret) {
 	return -1;
     }
 
@@ -62,7 +92,7 @@ int main(int argc, char *argv[])
 	return -1;
     }
 
-    ini = iniparser_load("ctrl.ini");
+    ini = iniparser_load(config_path);
     if (ini == NULL) {
         fprintf(stderr, "cannot parse file\n");
         return -1 ;
