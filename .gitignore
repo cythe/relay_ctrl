@@ -6,3 +6,4 @@ GRTAGS
 GTAGS
 *.tmp
 tags
+dist/*
