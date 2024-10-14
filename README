@@ -1,46 +1,39 @@
-#### 编译安装
+#### 硬件准备
+
+STM32F103 RxT6核心板
+<https://detail.tmall.com/item.htm?abbucket=16&id=533292717452&rn=aae28b3a208e570e6feb2e7c5abf6f06&spm=a1z10.3-b-s.w4011-21581912015.16.e6795535ekolGy&skuId=3762672349801>
+> 吐槽: 这家店有些定价有毛病, 价格上 RCT6 < RBT6 < R8T6...
+
+USB转TTL
+<https://detail.tmall.com/item.htm?abbucket=16&id=525204252260&rn=f84076cdbd6cd7e7abb7f5d4ef5d8ffc&skuId=4105232659631&spm=a1z10.3-b-s.w4011-21581912015.34.5d8d5535hqk8O0>
+
+继电器模块
+<https://detail.tmall.com/item.htm?abbucket=16&id=14476468844&rn=8fff93d6f023f8fd44d48f1400dae665&spm=a1z10.3-b-s.w4011-21581912015.61.7e0e5535gFfb8T>
+
+线材自备
+
+* 杜邦10根
+* USB数据线(STM32核心板供电)
+
+#### 软件准备
 
 * build
-    make
+    `make`
 
 * install
-    sudo ./scripts/install.sh
+    `sudo ./scripts/install.sh`
 
 * uninstall
-    sudo ./scripts/uninstall.sh
+    `sudo ./scripts/uninstall.sh`
 
+#### 控制思路
+
+local路线: PC通过串口控制STM32单片机GPIO, 进而操作继电器模块动作.
+
+RPC路线: relay_ctrl通过网络连接远端relay_hub服务, relay_hub服务器相当于local路线中的PC.
+
+#### 硬件安装
+
+#### 软件部署
 
 #### 使用方法
-
-1. 硬件连接
-
-串口: 开发板串口连接到USB-hub上(目前com1~com7可用)
-电源: 开发板电源与继电器控制插座连接
-网线: 开发板通信网口与交换机连接
-
-硬件连接完成后我会邮件通知硬件对应关系.
-e.g.
-    | User | barcode | RelayChannel | TelnetPort |
-    | rhao | 20123   | 1            | 2001       |
-
-2. 软件控制
-
-运行软件要保证 ping relay-hub 可通.
-relay-hub 是控制服务器的hostname.
-
-开发板电源控制:
-    解压relay_ctrl.tgz.
-    cd relay_ctrl
-    ./a.out <RelayChannel> <on|off>
-
-    e.g.
-        ./a.out 1 on
-
-    使用 ctrl.sh 可以不进目录执行.
-    <Path to ctrl.sh> <RelayChannel> <on|off>
-
-串口:
-    telnet relay-hub <TelnetPort>
-
-    e.g.
-        telnet relay-hub 2001
