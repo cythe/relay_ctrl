@@ -19,7 +19,7 @@
 #define ON 1
 #define OFF 0
 
-int usage(char* me)
+void usage(char* me)
 {
     printf("usage: %s <channel> <on|off>\n", me);
     printf("channel: %d..%d \n", CH_MIN,CH_MAX);

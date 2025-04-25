@@ -313,6 +313,7 @@ void *deal_msg(void *arg)
 	list_del(&pm->list);
 	free(pm);
     }
+    return NULL;
 }
 
 void m_loop(void)
